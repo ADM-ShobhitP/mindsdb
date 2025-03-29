@@ -1,0 +1,31 @@
+----------FILE INTEGRATE/ DATABASE INTEGRATE----------
+CSV-FILE use it well and make sure it only contains Text/comment in it.
+**pip install evaluate** in mindsdb
+
+
+----------CREATE MODEL----------
+CREATE MODEL sentiment_classifier
+PREDICT sentiment
+USING
+engine='huggingface',
+model_name= 'cardiffnlp/twitter-roberta-base-sentiment',
+task='text-classification',
+input_column = 'Text',
+labels = ['negative', 'neutral', 'positive']
+
+
+----------STATUS CHECK----------
+DESCRIBE sentiment_classifier;
+
+
+----------PREDICTION TESTING FOR SINGLE Text----------
+SELECT * FROM sentiment_classifier
+WHERE Text ='I topped the exam, Lets party'
+
+
+----------PREDICTION TESTING FOR BATCH----------
+SELECT t.Text, m.sentiment
+FROM files.sentiment AS t
+JOIN mindsdb.sentiment_classifier AS m
+LIMIT 50;
+

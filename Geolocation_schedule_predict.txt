@@ -1,0 +1,38 @@
+----------FILE INTEGRATE/ DATABASE INTEGRATE----------
+CREATE DATABASE geodb
+WITH ENGINE = "postgres",
+PARAMETERS = {
+    "user": "postgres",
+    "password": "password",
+    "host": "10.1.15.45",
+    "port": "5432",
+    "database": "Geolocation",
+    "schema": "demo_data"
+};
+
+
+----------CREATE MODEL----------
+CREATE MODEL mindsdb.schedule_predictor
+FROM geodb
+(SELECT * FROM model_monthly_schedule)
+PREDICT schedule_count
+WINDOW 30
+HORIZON 5;
+
+----------STATUS CHECK----------
+DESCRIBE schedule_predictor;
+
+
+----------PREDICTION TESTING----------
+SELECT visit_date, schedule_count 
+FROM mindsdb.schedule_predictor
+WHERE visit_date = '2025-04-05';
+
+
+----------JOB SETUP:- AUTOMATE REAL-TIME FORECASTS----------
+CREATE JOB schedule_predict_job (
+   RETRAIN mindsdb.schedule_predictor
+   FROM geodb 
+   (SELECT * FROM model_monthly_schedule)
+)
+EVERY 2 days;

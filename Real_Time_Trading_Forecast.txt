@@ -1,0 +1,69 @@
+----------DATABASE INTEGRATE----------
+CREATE DATABASE my_binance
+WITH ENGINE = 'binance';
+
+
+----------CREATE MODEL----------
+CREATE MODEL cryptocurrency_forecast_model
+FROM my_binance (
+SELECT *
+FROM aggregated_trade_data
+WHERE symbol = 'BTCUSDT'
+)
+PREDICT open_price
+ORDER BY open_time
+WINDOW 100
+HORIZON 100;
+
+
+----------STATUS CHECK----------
+DESCRIBE cryptocurrency_forecast_model;
+
+
+----------VIEW CREATION----------
+CREATE VIEW btcusdt_recent AS 
+(SELECT * FROM my_binance.aggregated_trade_data WHERE symbol = 'BTCUSDT');
+
+
+----------PREDICTION TESTING FOR BATCH----------
+SELECT to_timestamp(m.open_time) AS open_time, m.open_price AS predicted_price
+FROM mindsdb.cryptocurrency_forecast_model1 AS m
+JOIN btcusdt_recent AS t
+WHERE t.open_time > LATEST;
+
+
+----------SLACK INTEGRATION----------
+CREATE DATABASE btcusdt_slack_app
+WITH ENGINE = 'slack',
+PARAMETERS = {
+    "token": "xoxb-8686390317232-8657832584022-tNwde0ztwHZ2AYSnBx6nFbYZ"
+}
+
+
+----------SLACK MESSAGES SETUP----------
+INSERT INTO btcusdt_slack_app.messages (channel_id, text)
+VALUES ("C08KLSTAW75", "BTCUSDT forecasts coming soon.");
+
+
+----------JOB SETUP:- AUTOMATE REAL-TIME FORECASTS----------
+CREATE JOB btcusdt_forecast_slack (
+
+-- step 1: retrain the model with new data to improve its accuracy --
+
+RETRAIN cryptocurrency_forecast_model1 FROM my_binance
+(SELECT * FROM aggregated_trade_data WHERE symbol='BTCUSDT')
+USING join_learn_process = true;
+
+-- step 2: make fresh forecasts for the following 10 minutes and insert it into slack --
+
+INSERT INTO btcusdt_slack_app.messages(channel_id, text)
+VALUES("C08KLSTAW75", "Here are BTCUSDT Forecasts for the next 10 minutes:");
+INSERT INTO btcusdt_slack_app.messages(channel_id, text)
+SELECT "C08KLSTAW75" AS channel_id, CONCAT('timestamp: ', CAST(to_timestamp(CAST(m.open_time AS bigint)) AS string), ' -> open price: ', m.open_price) AS text
+FROM btcusdt_recent AS t
+JOIN cryptocurrency_forecast_model1 AS m
+WHERE t.open_time > LATEST;
+)
+EVERY 5 minutes;
+
+-- Make sure to highlight the whole query to be able to execute it --

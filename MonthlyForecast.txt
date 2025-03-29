@@ -1,0 +1,25 @@
+----------FILE INTEGRATE/ DATABASE INTEGRATE----------
+CSV-FILE use (handle date_time in proper yyyy-mm-dd HH:MM:SS) format
+
+
+----------CREATE MODEL----------
+CREATE MODEL monthly_maxTemp2 FROM mindsdb
+ (SELECT date_time, sunHour, sunrise, sunset, HeatIndexC, humidity, maxtempC 
+ FROM files.weather_bengaluru_new
+ LIMIT 5000)
+PREDICT maxtempC
+ORDER BY date_time
+WINDOW 1000
+HORIZON 1000
+USING ENGINE = 'statsforecast';
+
+
+----------STATUS CHECK----------
+DESCRIBE monthly_maxtemp2;
+
+
+----------PREDICTION TESTING----------
+SELECT m.date_time, m.maxtempC 
+FROM mindsdb.monthly_maxtemp1 as m
+JOIN files.weather_bengaluru_new as t
+WHERE t.date_time >= '2009-07-28 00:00:00';

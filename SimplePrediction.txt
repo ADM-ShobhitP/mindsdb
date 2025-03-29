@@ -1,0 +1,46 @@
+----------FILE INTEGRATE/ DATABASE INTEGRATE----------
+CREATE DATABASE demodb
+WITH ENGINE = "postgres",
+PARAMETERS = {
+    "user": "mindsdb",
+    "password": "password",
+    "host": "127.0.0.1",
+    "port": "5432", 
+    "database": "dvdrental",
+    "schema": "demo_data"
+};
+
+
+----------CREATE MODEL----------
+CREATE MODEL mindsdb.films
+FROM test
+(SELECT * FROM film_list)
+PREDICT price;  now prediction is SELECT price FROM mindsdb.films
+WHERE fid = 730 
+AND title = 'Ridgemont Submarine' 
+AND description = 'A Unbelieveable Drama of a Waitress And a Composer who must Sink a Mad Cow in Ancient Japan'
+AND category = 'new' AND length = 46 AND rating = 'PG-13'; what will come of it?
+
+
+----------STATUS CHECK----------
+DESCRIBE films;
+
+
+----------PREDICTION TESTING FOR SINGLE FILM----------
+SELECT price FROM mindsdb.films
+WHERE fid = 730 
+AND title = 'Ridgemont Submarine'
+AND description = 'A Unbelieveable Drama of a Waitress And a Composer who must Sink a Mad Cow in Ancient Japan'
+AND category = 'New'
+AND length = 46 
+AND rating = 'PG-13'
+AND actors = 'Johnny Lollobrigida, Julianne Dench, Whoopi Hurt, Michael Bolger, Julia Fawcett';
+
+
+----------PREDICTION TESTING FOR BATCH----------
+SELECT t.rental_price as real_price,
+m.rental_price as predicted_price,
+t.number_of_rooms,  t.number_of_bathrooms, t.sqft, t.location, t.days_on_market
+FROM example_db.home_rentals as t
+JOIN mindsdb.home_rentals_model as m
+LIMIT 10;
