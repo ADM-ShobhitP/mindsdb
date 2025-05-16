@@ -44,3 +44,37 @@ t.number_of_rooms,  t.number_of_bathrooms, t.sqft, t.location, t.days_on_market
 FROM example_db.home_rentals as t
 JOIN mindsdb.home_rentals_model as m
 LIMIT 10;
+
+
+-----------------------------------------------SIMPLE PREDICTION 2-----------------------------------------------------------------
+
+----------FILE INTEGRATE/ DATABASE INTEGRATE----------
+CREATE DATABASE demodb
+WITH ENGINE="postgres",
+PARAMETERS= {
+    "user": "postgres",
+    "password": "password",
+    "host": "10.1.15.88",
+    "port": "5432",
+    "database": "dvdrental",
+    "schema": "demo_data"
+}
+
+
+----------CREATE MODEL----------
+CREATE MODEL mindsdb.country_model
+FROM demodb
+(SELECT * FROM city_detail)
+PREDICT country_id;
+
+
+----------STATUS CHECK----------
+DESCRIBE country_model;
+
+
+----------PREDICTION TESTING FOR BATCH----------
+SELECT c.city, c.country_id AS actual_country_id, m.country_id
+FROM mindsdb.country_model AS m
+JOIN demodb.city_detail AS c
+ON m.city = c.city
+LIMIT 10;
